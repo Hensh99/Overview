@@ -1,224 +1,457 @@
-# Create database replication using `bucardo`
+# Create Database Replication Using `Bucardo`
 
-# Prerequisites
+## Prerequisites
 
-- Server with `sudo` access
-- Perl must be installed on the server
-- Postgres must be installed
+- Server with `sudo` access.
+- Perl must be installed on the server.
+- PostgreSQL must be installed (ensure version compatibility with Bucardo).
 
-# Perl Installation
 
-## Using apt package manager
+## Perl Installation
 
-1. install `perl`
+### Using `apt` Package Manager
 
-```bash
-apt-get install libdbix-safe-perl
-```
-
-## Manual installation
-
-1. Download `DBIX::Safe` compressed file
+Install the required Perl library:
 
 ```bash
-wget https://bucardo.org/downloads/dbix_safe.tar.gz
+sudo apt-get install libdbix-safe-perl
 ```
 
-1. Unpack file then access it 
- 
+### Manual Installation
 
-```bash
-tar xzf dbix_safe.tar.gz
-cd DBIx-Safe-1.2.5
-```
+1. Download the `DBIx::Safe` compressed file:
 
-1. Install make
+   ```bash
+   wget https://bucardo.org/downloads/dbix_safe.tar.gz
+   ```
 
-```bash
-sudo apt install make
-```
+2. Unpack the file and access the directory:
 
-1. Run [`Makefile.PL`](http://Makefile.PL) then run test
+   ```bash
+   tar xzf dbix_safe.tar.gz
+   cd DBIx-Safe-1.2.5
+   ```
 
-```bash
-perl Makefile.PL
-make
-make test
-```
+3. Install `make`:
 
-1. Install with `make`
+   ```bash
+   sudo apt install make
+   ```
 
-```bash
-sudo make install
-```
+4. Run the `Makefile.PL` script and tests:
 
-# Installation
+   ```bash
+   perl Makefile.PL
+   make
+   make test
+   ```
 
-1. Download `Bucardo` software then open directory
+5. Install the package:
 
-```bash
-wget https://bucardo.org/downloads/Bucardo-5.6.0.tar.gz
-tar xzf Bucardo-5.6.0.tar.gz
-cd Bucardo-5.6.0
-```
+   ```bash
+   sudo make install
+   ```
 
-1. Run [`Makefile.PL`](http://Makefile.PL) then use `make` 
+---
 
-```bash
-perl Makefile.PL
-make
-sudo make install
-```
+## Bucardo Installation
 
-# Create bucardo database
+1. Download Bucardo and extract it:
 
-1. Install `postgres` package with perl
+   ```bash
+   wget https://bucardo.org/downloads/Bucardo-5.6.0.tar.gz
+   tar xzf Bucardo-5.6.0.tar.gz
+   cd Bucardo-5.6.0
+   ```
 
-```bash
-apt-get install postgresql-plperl # Note: use version compatible with pg version
-```
+2. Run the `Makefile.PL` script and install Bucardo:
 
-1. Start installation
+   ```bash
+   perl Makefile.PL
+   make
+   sudo make install
+   ```
 
-```bash
-bucardo install
-```
+---
 
-1. Fill information that match needs for database setup, for example
-database running locally so host will be: localhost, and port by default will be 5432
-user will be dbuser, database will be bucardo, PID directory is the directory that is bucardo located in, so lets assume it is on this directory /home/userx/bucardo/Bucardo-5.6.0
-output will be like this, and should be updated interactively 
+## Create the Bucardo Database
 
-```bash
-This will install the bucardo database into an existing Postgres cluster.
-Postgres must have been compiled with Perl support,
-and you must connect as a superuser
+1. Install the PostgreSQL Perl extension:
 
-We will create a new superuser named 'bucardo',
-and make it the owner of a new database named 'bucardo'
+   ```bash
+   sudo apt-get install postgresql-plperl
+   ```
 
-Current connection settings:
-1. Host:          <none>
-2. Port:          5432
-3. User:          postgres
-4. Database:      postgres
-5. PID directory: /var/run/bucardo
-```
+2. Start the installation process:
 
-# Adding databases to Bucardo
+   ```bash
+   bucardo install
+   ```
 
-If we want to replicate data from db1 which has these info
+3. Fill in the required details during the installation process:
+   - Host: `localhost` (if running locally).
+   - Port: `5432` (default PostgreSQL port).
+   - User: PostgreSQL superuser (e.g., `postgres`).
+   - Database: Name for the Bucardo database (e.g., `bucardo`).
+   - PID Directory: Directory for Bucardo's PID file (e.g., `/var/run/bucardo`).
 
-```bash
-host=db1host
-port=db1port
-user=db1user
-pass=db1pass
-```
+4. Example prompt:
 
-to db2 which has these info
+   ```plaintext
+   This will install the bucardo database into an existing Postgres cluster.
+   Postgres must have been compiled with Perl support,
+   and you must connect as a superuser.
 
-```bash
-host=db2host
-port=db2port
-user=db2user
-pass=db2pass
-```
+   We will create a new superuser named 'bucardo',
+   and make it the owner of a new database named 'bucardo'.
 
-## Adding database 1
+   Current connection settings:
+   1. Host:          <none>
+   2. Port:          5432
+   3. User:          postgres
+   4. Database:      postgres
+   5. PID directory: /var/run/bucardo
+   ```
+
+---
+
+## Adding Databases to Bucardo
+
+Assume you want to replicate data from `db1` to `db2`.
+
+### Database 1
 
 ```bash
 bucardo add db db_example_1 dbhost=db1host dbport=db1port dbname=db1name dbuser=db1user dbpass='db1pass'
 ```
 
-## Adding database 2
+### Database 2
 
 ```bash
 bucardo add db db_example_2 dbhost=db2host dbport=db2port dbname=db2name dbuser=db2user dbpass='db2pass'
 ```
 
-## Adding all tables
+---
 
-We must add tables and sequences
+## Adding Tables and Sequences
+
+### Add All Tables and Sequences to a Herd
 
 ```bash
 bucardo add all tables --herd=exampleherd
 bucardo add all sequences --herd=exampleherd
 ```
 
-If we want to remove tables we can use this command, assuming it is in public schema and named
-table_name
+### Remove a Table
 
 ```bash
 bucardo remove table public.table_name --herd=exampleherd
 ```
 
-## Creating sync
+---
 
-Lets assume we create sync from db1 to db2 then we use this command named `dev_sync` 
+## Creating and Managing Syncs
 
-```bash
-bucardo add sync dev_sync herd=exampleherd dbs=db_example_1:source,db_example_2:target onetimecopy=2
-```
+1. **Create a Sync**  
+   For example, sync data from `db1` to `db2`:
 
-## Start sync
+   ```bash
+   bucardo add sync dev_sync herd=exampleherd dbs=db_example_1:source,db_example_2:target onetimecopy=2
+   ```
 
-```bash
-bucardo start
-```
+2. **Start the Sync**  
 
-# Notes
+   ```bash
+   bucardo start
+   ```
 
-- What is `herd` ? a `herd` is a group of tables, sequences that used as a filter to target that group when do some action
-- You must create directories manually for logging, so when error thrown while you create bucardo database, handle it manually by creating directories if error thrown, these directories are
+3. **Stop the Sync**  
 
-```bash
-/var/run/bucardo
-/var/log/bucardo
-```
+   ```bash
+   bucardo stop
+   ```
 
-- There are 2 modes for sync and you can know more about them [here](https://bucardo.org/Bucardo/operations/onetimecopy)
+---
 
-# Stop sync
+## Removing Databases, Tables, or Sequences
 
-This command used to stop sync between databases
-
-```bash
-bucardo stop
-```
-
-# Delete sequence from bucardo
+### Delete a Sequence
 
 ```bash
 bucardo remove sequence seqname
-```
-
-If this sequence is in herd then we specify the herd
-
-```bash
 bucardo remove sequence seqname --herd=exampleherd
 ```
 
-# Delete database from bucardo
+### Delete a Database
 
 ```bash
 bucardo remove db dbname
-```
-
-If this database has tables or sequences then we will do this with `--force`  like this
-
-```bash
 bucardo remove db dbname --force
 ```
 
-# Uninstall Bucardo
+---
 
-# Notes
+## Uninstalling Bucardo
 
-- You have to delete bucardo database after deleting bucardo from system
+1. Stop all Bucardo processes:
 
-# Resources
+   ```bash
+   bucardo stop
+   ```
 
-https://bucardo.org/Bucardo
+2. Remove the Bucardo database manually after deleting Bucardo from the system.
 
-[PostgreSQL Replication using Bucardo 5.4.1 | by Logesh Mohan | Medium](https://medium.com/@logeshmohan/postgresql-replication-using-bucardo-5-4-1-6e78541ceb5e)
+---
+
+## Notes
+
+1. **What is a Herd?**  
+   A *herd* is a group of tables and sequences used as a target for actions like synchronization.
+
+2. **Directory Creation**:  
+   If errors occur during installation, manually create the following directories:
+
+   ```bash
+   sudo mkdir -p /var/run/bucardo /var/log/bucardo
+   ```
+
+3. **Synchronization Modes**:  
+   Bucardo supports two modes of synchronization. Learn more [here](https://bucardo.org/Bucardo/operations/onetimecopy).
+
+---
+
+## Resources
+
+- [Bucardo Documentation](https://bucardo.org/Bucardo)
+- [PostgreSQL Replication Using Bucardo 5.4.1 | Medium](https://medium.com/@logeshmohan/postgresql-replication-using-bucardo-5-4-1-6e78541ceb5e)
+
+---Here’s an updated and polished version of your document in Markdown:
+
+# Create Database Replication Using `Bucardo`
+
+## Prerequisites
+
+- Server with `sudo` access.
+- Perl must be installed on the server.
+- PostgreSQL must be installed (ensure version compatibility with Bucardo).
+
+
+## Perl Installation
+
+### Using `apt` Package Manager
+
+Install the required Perl library:
+
+```bash
+sudo apt-get install libdbix-safe-perl
+```
+
+### Manual Installation
+
+1. Download the `DBIx::Safe` compressed file:
+
+   ```bash
+   wget https://bucardo.org/downloads/dbix_safe.tar.gz
+   ```
+
+2. Unpack the file and access the directory:
+
+   ```bash
+   tar xzf dbix_safe.tar.gz
+   cd DBIx-Safe-1.2.5
+   ```
+
+3. Install `make`:
+
+   ```bash
+   sudo apt install make
+   ```
+
+4. Run the `Makefile.PL` script and tests:
+
+   ```bash
+   perl Makefile.PL
+   make
+   make test
+   ```
+
+5. Install the package:
+
+   ```bash
+   sudo make install
+   ```
+
+---
+
+## Bucardo Installation
+
+1. Download Bucardo and extract it:
+
+   ```bash
+   wget https://bucardo.org/downloads/Bucardo-5.6.0.tar.gz
+   tar xzf Bucardo-5.6.0.tar.gz
+   cd Bucardo-5.6.0
+   ```
+
+2. Run the `Makefile.PL` script and install Bucardo:
+
+   ```bash
+   perl Makefile.PL
+   make
+   sudo make install
+   ```
+
+---
+
+## Create the Bucardo Database
+
+1. Install the PostgreSQL Perl extension:
+
+   ```bash
+   sudo apt-get install postgresql-plperl
+   ```
+
+2. Start the installation process:
+
+   ```bash
+   bucardo install
+   ```
+
+3. Fill in the required details during the installation process:
+   - Host: `localhost` (if running locally).
+   - Port: `5432` (default PostgreSQL port).
+   - User: PostgreSQL superuser (e.g., `postgres`).
+   - Database: Name for the Bucardo database (e.g., `bucardo`).
+   - PID Directory: Directory for Bucardo's PID file (e.g., `/var/run/bucardo`).
+
+4. Example prompt:
+
+   ```plaintext
+   This will install the bucardo database into an existing Postgres cluster.
+   Postgres must have been compiled with Perl support,
+   and you must connect as a superuser.
+
+   We will create a new superuser named 'bucardo',
+   and make it the owner of a new database named 'bucardo'.
+
+   Current connection settings:
+   1. Host:          <none>
+   2. Port:          5432
+   3. User:          postgres
+   4. Database:      postgres
+   5. PID directory: /var/run/bucardo
+   ```
+
+---
+
+## Adding Databases to Bucardo
+
+Assume you want to replicate data from `db1` to `db2`.
+
+### Database 1
+
+```bash
+bucardo add db db_example_1 dbhost=db1host dbport=db1port dbname=db1name dbuser=db1user dbpass='db1pass'
+```
+
+### Database 2
+
+```bash
+bucardo add db db_example_2 dbhost=db2host dbport=db2port dbname=db2name dbuser=db2user dbpass='db2pass'
+```
+
+---
+
+## Adding Tables and Sequences
+
+### Add All Tables and Sequences to a Herd
+
+```bash
+bucardo add all tables --herd=exampleherd
+bucardo add all sequences --herd=exampleherd
+```
+
+### Remove a Table
+
+```bash
+bucardo remove table public.table_name --herd=exampleherd
+```
+
+---
+
+## Creating and Managing Syncs
+
+1. **Create a Sync**  
+   For example, sync data from `db1` to `db2`:
+
+   ```bash
+   bucardo add sync dev_sync herd=exampleherd dbs=db_example_1:source,db_example_2:target onetimecopy=2
+   ```
+
+2. **Start the Sync**  
+
+   ```bash
+   bucardo start
+   ```
+
+3. **Stop the Sync**  
+
+   ```bash
+   bucardo stop
+   ```
+
+---
+
+## Removing Databases, Tables, or Sequences
+
+### Delete a Sequence
+
+```bash
+bucardo remove sequence seqname
+bucardo remove sequence seqname --herd=exampleherd
+```
+
+### Delete a Database
+
+```bash
+bucardo remove db dbname
+bucardo remove db dbname --force
+```
+
+---
+
+## Uninstalling Bucardo
+
+1. Stop all Bucardo processes:
+
+   ```bash
+   bucardo stop
+   ```
+
+2. Remove the Bucardo database manually after deleting Bucardo from the system.
+
+---
+
+## Notes
+
+1. **What is a Herd?**  
+   A *herd* is a group of tables and sequences used as a target for actions like synchronization.
+
+2. **Directory Creation**:  
+   If errors occur during installation, manually create the following directories:
+
+   ```bash
+   sudo mkdir -p /var/run/bucardo /var/log/bucardo
+   ```
+
+3. **Synchronization Modes**:  
+   Bucardo supports two modes of synchronization. Learn more [here](https://bucardo.org/Bucardo/operations/onetimecopy).
+
+---
+
+## Resources
+
+- [Bucardo Documentation](https://bucardo.org/Bucardo)
+- [PostgreSQL Replication Using Bucardo 5.4.1 | Medium](https://medium.com/@logeshmohan/postgresql-replication-using-bucardo-5-4-1-6e78541ceb5e)
+
+---
